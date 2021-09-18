@@ -59,30 +59,10 @@ mod systems;
 mod transform_node;
 
 use crate::{egui_node::EguiNode, systems::*, transform_node::EguiTransformNode};
-use bevy::{
-    app::{AppBuilder, CoreStage, Plugin},
-    asset::{Assets, Handle, HandleUntyped},
-    ecs::{
+use bevy::{app::{AppBuilder, CoreStage, Plugin}, asset::{Assets, Handle, HandleUntyped}, ecs::{
         schedule::{ParallelSystemDescriptorCoercion, StageLabel, SystemLabel, SystemStage},
         system::IntoSystem,
-    },
-    input::InputSystem,
-    log,
-    reflect::TypeUuid,
-    render::{
-        pipeline::{
-            BlendFactor, BlendOperation, BlendState, ColorTargetState, ColorWrite, CompareFunction,
-            CullMode, DepthBiasState, DepthStencilState, FrontFace, MultisampleState,
-            PipelineDescriptor, PrimitiveState, StencilFaceState, StencilState,
-        },
-        render_graph::{base, base::Msaa, RenderGraph, WindowSwapChainNode, WindowTextureNode},
-        shader::{Shader, ShaderStage, ShaderStages},
-        texture::{Texture, TextureFormat},
-        RenderStage,
-    },
-    utils::HashMap,
-    window::WindowId,
-};
+    }, input::InputSystem, log, reflect::TypeUuid, render::{RenderStage, pipeline::{BlendComponent, BlendFactor, BlendOperation, BlendState, ColorTargetState, ColorWrite, CompareFunction, DepthBiasState, DepthStencilState, FrontFace, MultisampleState, PipelineDescriptor, PrimitiveState, StencilFaceState, StencilState}, render_graph::{base, base::Msaa, RenderGraph, WindowSwapChainNode, WindowTextureNode}, shader::{Shader, ShaderStage, ShaderStages}, texture::{Texture, TextureFormat}}, utils::HashMap, window::WindowId};
 #[cfg(all(feature = "manage_clipboard", not(target_arch = "wasm32")))]
 use clipboard::{ClipboardContext, ClipboardProvider};
 #[cfg(all(feature = "manage_clipboard", not(target_arch = "wasm32")))]
@@ -493,7 +473,7 @@ fn build_egui_pipeline(shaders: &mut Assets<Shader>, sample_count: u32) -> Pipel
     PipelineDescriptor {
         primitive: PrimitiveState {
             front_face: FrontFace::Cw,
-            cull_mode: CullMode::None,
+            cull_mode: None,
             ..Default::default()
         },
         depth_stencil: Some(DepthStencilState {
@@ -511,20 +491,22 @@ fn build_egui_pipeline(shaders: &mut Assets<Shader>, sample_count: u32) -> Pipel
                 slope_scale: 0.0,
                 clamp: 0.0,
             },
-            clamp_depth: false,
+            // clamp_depth: false,
         }),
         color_target_states: vec![ColorTargetState {
             format: TextureFormat::default(),
-            color_blend: BlendState {
-                src_factor: BlendFactor::One,
-                dst_factor: BlendFactor::OneMinusSrcAlpha,
-                operation: BlendOperation::Add,
-            },
-            alpha_blend: BlendState {
-                src_factor: BlendFactor::One,
-                dst_factor: BlendFactor::OneMinusSrcAlpha,
-                operation: BlendOperation::Add,
-            },
+            blend: Some(BlendState {
+                color: BlendComponent {
+                    src_factor: BlendFactor::One,
+                    dst_factor: BlendFactor::OneMinusSrcAlpha,
+                    operation: BlendOperation::Add,
+                },
+                alpha: BlendComponent {
+                    src_factor: BlendFactor::One,
+                    dst_factor: BlendFactor::OneMinusSrcAlpha,
+                    operation: BlendOperation::Add,
+                }
+            }),
             write_mask: ColorWrite::ALL,
         }],
         multisample: MultisampleState {
